@@ -1,4 +1,3 @@
-#include "kato/log.h"
 #include "thermo.h"
 
 #include <thread>
@@ -23,7 +22,6 @@ int main(int argc, char const *argv[])
 
     kato::SerialLink link("/dev/ttyGS0", B115200, onError);
 
-    // DS2484 bus_10((DS2484_I2C_BUS_PREFIX + std::to_string(10)).c_str());
     DS2484 bus_11((DS2484_I2C_BUS_PREFIX + std::to_string(11)).c_str());
     DS2484 bus_12((DS2484_I2C_BUS_PREFIX + std::to_string(12)).c_str());
     DS2484 bus_13((DS2484_I2C_BUS_PREFIX + std::to_string(13)).c_str());
@@ -33,12 +31,11 @@ int main(int argc, char const *argv[])
     DS2484 bus_17((DS2484_I2C_BUS_PREFIX + std::to_string(17)).c_str());
     DS2484 bus_18((DS2484_I2C_BUS_PREFIX + std::to_string(18)).c_str());
     DS2484 bus_19((DS2484_I2C_BUS_PREFIX + std::to_string(19)).c_str());
-    // DS2484 bus_20((DS2484_I2C_BUS_PREFIX + std::to_string(20)).c_str());
     DS2484 bus_21((DS2484_I2C_BUS_PREFIX + std::to_string(21)).c_str());
     DS2484 bus_22((DS2484_I2C_BUS_PREFIX + std::to_string(22)).c_str());
     DS2484 bus_23((DS2484_I2C_BUS_PREFIX + std::to_string(23)).c_str());
 
-    std::vector<DS2484> buses = {bus_12};
+    std::vector<DS2484> buses = {bus_11, bus_12, bus_13, bus_14, bus_15, bus_16, bus_17, bus_18, bus_19, bus_21, bus_22, bus_23};
 
     std::vector<std::thread> threads;
     for (DS2484 &bus : buses)

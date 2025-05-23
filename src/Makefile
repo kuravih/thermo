@@ -9,24 +9,22 @@ LIB_DIR = lib
 
 # ==== kato source file ===============================================================================================
 KATO_DIR = $(LIB_DIR)/kato
-
-KATO_SOURCES = $(KATO_DIR)/src/function.cpp $(KATO_DIR)/include/kato/serial_link.cpp
-KATO_HEADERS = $(KATO_DIR)/include/kato/function.h $(KATO_DIR)/include/kato/serial_link.h $(KATO_DIR)/include/kato/log.h
-KATO_OBJS = $(addprefix .kato_, $(addsuffix .o, $(basename $(notdir $(KATO_SOURCES)))))
-
+KATO_HEADERS = $(KATO_DIR)/include/kato/function.hpp $(KATO_DIR)/include/kato/log.hpp
 KATO_CXXFLAGS = -I$(KATO_DIR)/include
 # ==== kato source file ===============================================================================================
 
 
 
 
+# ==== link source file ===============================================================================================
+LINK_DIR = $(LIB_DIR)/link
 
-# ==== thermo source files ==========================================================================================
-THERMO_EXE = runner
-THERMO_SOURCES = runner.cpp thermo.cpp
-THERMO_HEADERS = thermo.h
-THERMO_OBJS = $(addprefix ., $(addsuffix .o, $(basename $(notdir $(THERMO_SOURCES)))))
-# ==== thermo source files ==========================================================================================
+LINK_SOURCES = $(LINK_DIR)/src/serial_link.cpp
+LINK_HEADERS = $(LINK_DIR)/include/link/serial_link.h
+LINK_OBJS = $(addprefix .link_, $(addsuffix .o, $(basename $(notdir $(LINK_SOURCES)))))
+
+LINK_CXXFLAGS = -I$(LINK_DIR)/include
+# ==== link source file ===============================================================================================
 
 
 
@@ -47,13 +45,24 @@ DS2484_LIBS = -li2c
 
 
 
+# ==== thermo source files ============================================================================================
+THERMO_EXE = runner
+THERMO_SOURCES = runner.cpp thermo.cpp
+THERMO_HEADERS = thermo.h
+THERMO_OBJS = $(addprefix ., $(addsuffix .o, $(basename $(notdir $(THERMO_SOURCES)))))
+# ==== thermo source files ============================================================================================
+
+
+
+
+
 # ==== gcc flags ======================================================================================================
 CXXFLAGS = -Wall -Wformat -pthread
 CXXFLAGS += $(KATO_CXXFLAGS)
 CXXFLAGS += $(DS2484_CXXFLAGS)
+CXXFLAGS += $(LINK_CXXFLAGS)
 
-LIBS = -lpthread 
-LIBS += $(KATO_LIBS)
+LIBS = -lpthread
 LIBS += $(DS2484_LIBS)
 
 CFLAGS = $(CXXFLAGS)
@@ -66,7 +75,7 @@ CXXFLAGS_STD = $(CXXFLAGS) -std=c++17
 
 
 # ==== build rules ====================================================================================================
-.kato_%.o:$(KATO_DIR)/src/%.cpp
+.link_%.o: $(LINK_DIR)/src/%.cpp
 	$(CXX) $(CXXFLAGS_STD) -c -o $@ $<
 
 .ds2484_%.o: $(DS2484_DIR)/src/%.cpp
@@ -78,7 +87,7 @@ CXXFLAGS_STD = $(CXXFLAGS) -std=c++17
 all: $(THERMO_EXE)
 	@echo Build complete
 
-$(THERMO_EXE): $(KATO_OBJS) $(THERMO_OBJS) $(DS2484_OBJS)
+$(THERMO_EXE): $(THERMO_OBJS) $(DS2484_OBJS) $(LINK_OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 clean_thermo:
@@ -87,8 +96,8 @@ clean_thermo:
 clean_ds2484:
 	rm -f $(THERMO_EXE) $(DS2484_OBJS)
 
-clean_kato:
-	rm -f $(CAMLIVE_EXE) $(KATO_OBJS)
+clean_link:
+	rm -f $(THERMO_EXE) $(LINK_OBJS)
 
-clean: clean_thermo clean_kato clean_ds2484
+clean: clean_thermo clean_ds2484 clean_link
 # ==== build rules ====================================================================================================

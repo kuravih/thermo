@@ -6,8 +6,6 @@
 #include <iomanip>
 #include <fstream>
 
-#include "kato/log.h"
-
 #define CORE_ROM 0xC012E001C012E001
 static sample_t DEADBEEF(0xDEADBEEFDEADBEEF, 0.0);
 
@@ -17,7 +15,7 @@ extern std::atomic<bool> busy;
 
 void onOrderScan(kato::SerialLink &_link, DS2484 &_bus)
 {
-    kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderScan() bus " << _bus.dev << KATO_RESET << std::endl;
+    // kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderScan() bus " << _bus.dev << KATO_RESET << std::endl;
     std::lock_guard<std::mutex> lock(mtx);
     _link.write_uint8(_bus.samples.size());
     for (sample_t &sample : _bus.samples)
@@ -26,7 +24,7 @@ void onOrderScan(kato::SerialLink &_link, DS2484 &_bus)
 
 void onOrderRead(kato::SerialLink &_link, DS2484 &_bus, const uint64_t _rom)
 {
-    kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderRead() bus " << _bus.dev << " rom " << std::hex << std::setw(16) << std::setfill('0') << _rom << KATO_RESET << std::endl;
+    // kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderRead() bus " << _bus.dev << " rom " << std::hex << std::setw(16) << std::setfill('0') << _rom << KATO_RESET << std::endl;
     for (sample_t &sample : _bus.samples)
     {
         if (sample.rom == _rom)
@@ -46,7 +44,7 @@ void onOrderRead(kato::SerialLink &_link, DS2484 &_bus, const uint64_t _rom)
 
 void onOrderRead(kato::SerialLink &_link, const uint64_t _rom)
 {
-    kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderRead()" << KATO_RESET << std::endl;
+    // kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderRead()" << KATO_RESET << std::endl;
     if (_rom == CORE_ROM)
     {
         sample_t sample{CORE_ROM, 0};
@@ -66,15 +64,19 @@ void busSampleStream(kato::SerialLink &_link, DS2484 &_bus)
     {
         if (_link.is_connected && live.load())
         {
-            _bus.start_conversion(true);
-            for (sample_t &sample : _bus.samples) {
-                // _bus.led(sample.rom, true);
-                _bus.read_temperature(sample.rom, sample.temperature, false, false);
-                sample.set_timestamp();
-                // _bus.led(sample.rom, false);
-                std::lock_guard<std::mutex> lock(mtx);
-                write_sample(_link, sample);
-                kato::log::cout << KATO_RED << "thermo.cpp::busSampleStream() " << "sample " << sample << KATO_RESET << std::endl;
+            if (_bus.samples.size() > 0)
+            {
+                _bus.start_conversion(true);
+                for (sample_t &sample : _bus.samples)
+                {
+                    // _bus.led(sample.rom, true);
+                    _bus.read_temperature(sample.rom, sample.temperature, false, false);
+                    sample.set_timestamp();
+                    // _bus.led(sample.rom, false);
+                    std::lock_guard<std::mutex> lock(mtx);
+                    write_sample(_link, sample);
+                    kato::log::cout << KATO_BLUE << "thermo.cpp::busSampleStream()  " << "sample " << sample << KATO_RESET << std::endl;
+                }
             }
         }
         else
@@ -109,6 +111,7 @@ void coreSampleStream(kato::SerialLink &_link)
             read_core_temperature(sample.temperature);
             std::lock_guard<std::mutex> lock(mtx);
             write_sample(_link, sample);
+            kato::log::cout << KATO_BLUE << "thermo.cpp::coreSampleStream() " << "sample " << sample << KATO_RESET << std::endl;
         }
         else
         {
@@ -120,13 +123,13 @@ void coreSampleStream(kato::SerialLink &_link)
 
 void onOrderStart()
 {
-    kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderStart()" << KATO_RESET << std::endl;
+    // kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderStart()" << KATO_RESET << std::endl;
     live.store(true);
 }
 
 void onOrderStop()
 {
-    kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderStop()" << KATO_RESET << std::endl;
+    // kato::log::cout << KATO_GREEN << "thermo.cpp::onOrderStop()" << KATO_RESET << std::endl;
     live.store(false);
 }
 
@@ -134,10 +137,11 @@ void readRespond(kato::SerialLink &_link, std::vector<DS2484> &_buses)
 {
     if (_link.is_data_available())
     {
+        onOrderStop();
+        // tcflush(_link.fd, TCIFLUSH);
         kato::order_t order = _link.read_order(); // The first byte received is the order
         if (order == kato::order_t::HELLO)
         {
-            onOrderStop();
             // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - RX [HELLO]" << KATO_RESET << std::endl;
             if (!_link.is_connected) // If the cards haven't say hello, check the connection
             {
@@ -153,37 +157,28 @@ void readRespond(kato::SerialLink &_link, std::vector<DS2484> &_buses)
         }
         else if (order == kato::order_t::ALREADY_CONNECTED)
         {
-            onOrderStop();
             // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - RX [ALREADY_CONNECTED]" << KATO_RESET << std::endl;
             _link.is_connected = true;
         }
         else if (order == kato::order_t::SCAN)
         {
-            onOrderStop();
             // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - RX [SCAN]" << KATO_RESET << std::endl;
             uint8_t channel = _link.read_uint8(); // channel to scan
             for (DS2484 &bus : _buses)
-                if (bus.dev == DS2484_I2C_BUS_PREFIX + std::to_string(channel))
+                if (bus.dev == DS2484_I2C_BUS_PREFIX + std::to_string((int)channel))
                     onOrderScan(_link, bus);
         }
         else if (order == kato::order_t::READ)
         {
-            onOrderStop();
             // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - RX [READ]" << KATO_RESET << std::endl;
             uint8_t channel = _link.read_uint8(); // channel to read
             uint64_t rom = _link.read_uint64();   // sensor to read
             if (rom == CORE_ROM)
-            {
                 onOrderRead(_link, rom);
-            }
             else
-            {
                 for (DS2484 &bus : _buses)
-                {
-                    if (bus.dev == DS2484_I2C_BUS_PREFIX + std::to_string(channel))
+                    if (bus.dev == DS2484_I2C_BUS_PREFIX + std::to_string((int)channel))
                         onOrderRead(_link, bus, rom);
-                }
-            }
         }
         else if (order == kato::order_t::START)
         {

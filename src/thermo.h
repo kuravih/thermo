@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "kato/log.h"
-#include "kato/serial_link.h"
+#include "kato/log.hpp"
+#include "link/serial_link.h"
 #include "ds2484/ds2484.h"
 
 #include <atomic>

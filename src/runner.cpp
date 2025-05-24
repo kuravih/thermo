@@ -20,7 +20,7 @@ int main(int argc, char const *argv[])
 
     std::signal(SIGINT, sigint_handler);
 
-    kato::SerialLink link("/dev/ttyGS0", B115200, onError);
+    SerialLink link("/dev/ttyGS0", B115200, onError);
 
     DS2484 bus_11((DS2484_I2C_BUS_PREFIX + std::to_string(11)).c_str());
     DS2484 bus_12((DS2484_I2C_BUS_PREFIX + std::to_string(12)).c_str());

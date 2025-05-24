@@ -8,38 +8,26 @@ LIB_DIR = lib
 
 
 # ==== kato source file ===============================================================================================
-KATO_DIR = $(LIB_DIR)/kato
-KATO_HEADERS = $(KATO_DIR)/include/kato/function.hpp $(KATO_DIR)/include/kato/log.hpp
-KATO_CXXFLAGS = -I$(KATO_DIR)/include
+KATO_HEADERS = $(LIB_DIR)/kato/function.hpp $(LIB_DIR)/kato/log.hpp
+KATO_CXXFLAGS = -I$(LIB_DIR)
 # ==== kato source file ===============================================================================================
 
 
 
 
 # ==== link source file ===============================================================================================
-LINK_DIR = $(LIB_DIR)/link
-
-LINK_SOURCES = $(LINK_DIR)/src/serial_link.cpp
-LINK_HEADERS = $(LINK_DIR)/include/link/serial_link.h
-LINK_OBJS = $(addprefix .link_, $(addsuffix .o, $(basename $(notdir $(LINK_SOURCES)))))
-
-LINK_CXXFLAGS = -I$(LINK_DIR)/include
+LINK_HEADERS = $(LIB_DIR)/link/serial_link.hpp
+LINK_CXXFLAGS = -I$(LIB_DIR)
 # ==== link source file ===============================================================================================
 
 
 
 
-
-# ==== ds2484 source files ============================================================================================
-DS2484_DIR = $(LIB_DIR)/ds2484
-
-DS2484_SOURCES = $(DS2484_DIR)/src/ds2484.cpp
-DS2484_HEADERS = $(DS2484_DIR)/include/ds2484/ds2484.h
-DS2484_OBJS = $(addprefix .ds2484_, $(addsuffix .o, $(basename $(notdir $(DS2484_SOURCES)))))
-
-DS2484_CXXFLAGS = -I$(DS2484_DIR)/include
+# ==== ds2484 source file =============================================================================================
+DS2484_HEADERS = $(LIB_DIR)/ds2484/ds2484.hpp
+DS2484_CXXFLAGS = -I$(LIB_DIR)
 DS2484_LIBS = -li2c
-# ==== ds2484 source files ============================================================================================
+# ==== ds2484 source file =============================================================================================
 
 
 
@@ -75,29 +63,17 @@ CXXFLAGS_STD = $(CXXFLAGS) -std=c++17
 
 
 # ==== build rules ====================================================================================================
-.link_%.o: $(LINK_DIR)/src/%.cpp
-	$(CXX) $(CXXFLAGS_STD) -c -o $@ $<
-
-.ds2484_%.o: $(DS2484_DIR)/src/%.cpp
-	$(CXX) $(CXXFLAGS_STD) -c -o $@ $<
-
 .%.o:%.cpp $(THERMO_HEADERS)
 	$(CXX) $(CXXFLAGS_STD) -c -o $@ $<
 
 all: $(THERMO_EXE)
 	@echo Build complete
 
-$(THERMO_EXE): $(THERMO_OBJS) $(DS2484_OBJS) $(LINK_OBJS)
+$(THERMO_EXE): $(THERMO_OBJS) $(KATO_HEADERS) $(LINK_HEADERS) $(DS2484_HEADERS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
 clean_thermo:
 	rm -f $(THERMO_EXE) $(THERMO_OBJS)
 
-clean_ds2484:
-	rm -f $(THERMO_EXE) $(DS2484_OBJS)
-
-clean_link:
-	rm -f $(THERMO_EXE) $(LINK_OBJS)
-
-clean: clean_thermo clean_ds2484 clean_link
+clean: clean_thermo
 # ==== build rules ====================================================================================================

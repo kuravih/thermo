@@ -64,8 +64,6 @@ int main(int argc, char const *argv[])
     }
     // ---- serial communication --------------------------------------------------------------------------------------
 
-    // onOrderStart();
-
     kato::log::cout << KATO_GREEN << "runner.cpp::main() - Stopping listen..." << KATO_RESET << std::endl;
 
     for (std::thread &thread : threads)

@@ -45,7 +45,7 @@ THERMO_OBJS = $(addprefix ., $(addsuffix .o, $(basename $(notdir $(THERMO_SOURCE
 
 
 # ==== gcc flags ======================================================================================================
-CXXFLAGS = -Wall -Wformat -pthread
+CXXFLAGS = -Wall -Wformat -pthread -O3
 CXXFLAGS += $(KATO_CXXFLAGS)
 CXXFLAGS += $(DS2484_CXXFLAGS)
 CXXFLAGS += $(LINK_CXXFLAGS)

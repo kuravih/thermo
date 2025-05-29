@@ -69,10 +69,10 @@ void busSampleStream(SerialLink &_link, DS2484 &_bus)
                 _bus.start_conversion(true);
                 for (sample_t &sample : _bus.samples)
                 {
-                    // _bus.led(sample.rom, true);
+                    _bus.led(sample.rom, true);
                     _bus.read_temperature(sample.rom, sample.temperature, false, false);
                     sample.set_timestamp();
-                    // _bus.led(sample.rom, false);
+                    _bus.led(sample.rom, false);
                     std::lock_guard<std::mutex> lock(mtx);
                     write_sample(_link, sample);
                     kato::log::cout << KATO_BLUE << "thermo.cpp::busSampleStream()  " << "sample " << sample << KATO_RESET << std::endl;
@@ -138,12 +138,11 @@ void readRespond(SerialLink &_link, std::vector<DS2484> &_buses)
     if (_link.is_data_available())
     {
         onOrderStop();
-        // tcflush(_link.fd, TCIFLUSH);
-        order_t order = _link.read_order(); // The first byte received is the order
+        order_t order = _link.read_order();
         if (order == order_t::HELLO)
         {
             // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - RX [HELLO]" << KATO_RESET << std::endl;
-            if (!_link.is_connected) // If the cards haven't say hello, check the connection
+            if (!_link.is_connected)
             {
                 _link.is_connected = true;
                 _link.write_order(order_t::HELLO);
@@ -151,7 +150,7 @@ void readRespond(SerialLink &_link, std::vector<DS2484> &_buses)
             }
             else
             {
-                _link.write_order(order_t::ALREADY_CONNECTED); // If we are already connected do not send "hello" to avoid infinite loop
+                _link.write_order(order_t::ALREADY_CONNECTED);
                 // kato::log::cout << KATO_GREEN << "thermo.cpp::readRespond() - TX [ALREADY_CONNECTED]" << KATO_RESET << std::endl;
             }
         }
